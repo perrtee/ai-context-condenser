@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1220">
+  <meta name="description" content="Prepare cleaner context and launch focused prompts for any AI assistant.">
+  <title>AI Context Condenser</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    body {
+      background:
+        radial-gradient(ellipse at 15% -15%, rgba(37, 99, 235, .17), transparent 36rem),
+        #0b1220;
+    }
+    textarea {
+      resize: vertical;
+      scrollbar-color: #334155 transparent;
+    }
+    .panel {
+      background: linear-gradient(145deg, rgba(20, 30, 47, .96), rgba(15, 23, 38, .96));
+      box-shadow: 0 20px 55px rgba(0, 0, 0, .2);
+    }
+    .prompt-card {
+      background: linear-gradient(145deg, rgba(30, 41, 59, .74), rgba(17, 27, 43, .92));
+      transition: transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
+    }
+    .prompt-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(96, 165, 250, .65);
+      background: linear-gradient(145deg, rgba(37, 54, 79, .9), rgba(18, 32, 53, .98));
+      box-shadow: 0 12px 30px rgba(0, 0, 0, .18);
+    }
+    .prompt-card:focus-visible, button:focus-visible, textarea:focus-visible {
+      outline: 2px solid #60a5fa;
+      outline-offset: 3px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-100 antialiased">
+  <main class="mx-auto max-w-[1440px] px-5 py-8 sm:px-8 lg:px-10 lg:py-10">
+    <header class="mb-8 flex flex-col gap-5 border-b border-slate-800/90 pb-7 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <div class="mb-3 inline-flex items-center gap-2 rounded-full border border-blue-400/20 bg-blue-400/[0.07] px-3 py-1 text-[11px] font-semibold uppercase tracking-[.18em] text-blue-300">
+          <span class="h-1.5 w-1.5 rounded-full bg-blue-400"></span>
+          Focused context. Better outcomes.
+        </div>
+        <h1 class="text-3xl font-semibold tracking-tight text-white sm:text-4xl">AI Context Condenser</h1>
+        <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-400">Trim the noise from your source material, then copy a ready-to-use prompt for your next AI workflow.</p>
+      </div>
+      <div class="flex items-center gap-2 self-start rounded-lg border border-slate-800 bg-slate-900/70 px-3 py-2 text-xs text-slate-400 sm:self-auto">
+        <svg aria-hidden="true" class="h-4 w-4 text-blue-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 1.667a6.667 6.667 0 0 0-3.825 12.127c.463.326.825.85.825 1.456v.583h6v-.583c0-.606.362-1.13.825-1.456A6.667 6.667 0 0 0 10 1.667ZM7.5 17.5h5a.833.833 0 1 1 0 1.667h-5a.833.833 0 0 1 0-1.667Z" clip-rule="evenodd"/></svg>
+        Runs locally in your browser
+      </div>
+    </header>
+
+    <div class="grid items-start gap-6 xl:grid-cols-2 xl:gap-7">
+      <section aria-labelledby="prepare-heading" class="panel rounded-2xl border border-slate-800 p-5 sm:p-7">
+        <div class="mb-5 flex items-start gap-4">
+          <span class="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-400/20 bg-blue-500/10 text-xs font-bold tracking-wider text-blue-300">01</span>
+          <div>
+            <p class="text-[11px] font-semibold uppercase tracking-[.17em] text-blue-300">Step 1</p>
+            <h2 id="prepare-heading" class="mt-1 text-xl font-semibold text-white">Paste your text</h2>
+            <p class="mt-1 text-sm leading-5 text-slate-400">Paste messy emails, notes, or source text here. We’ll remove extra details and clean it up for you.</p>
+          </div>
+        </div>
+
+        <div class="mb-2 flex items-center justify-between gap-3">
+          <label for="rawText" class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Raw text</label>
+          <span id="rawCharacterCount" class="text-[11px] tabular-nums text-slate-500">0 characters</span>
+        </div>
+        <textarea id="rawText" rows="10" spellcheck="false" placeholder="Paste an email thread, notes, or other source text here…" class="block min-h-[220px] w-full rounded-xl border border-slate-700/90 bg-[#0a111e] px-4 py-3.5 text-sm leading-6 text-slate-200 placeholder:text-slate-600 focus:border-blue-500/70 focus:outline-none"></textarea>
+        <div class="mt-4 grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+          <div class="flex flex-col items-start gap-3">
+            <button id="condenseButton" type="button" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-950/30 transition hover:bg-blue-500 active:bg-blue-700">
+              <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M3.333 3.333h13.334v2.5H3.333v-2.5Zm0 5.417h8.334v2.5H3.333v-2.5Zm0 5.417h5.834v2.5H3.333v-2.5Zm11.25-2.5v2.5h2.5v2.5h-2.5v2.5h-2.5v-2.5h-2.5v-2.5h2.5v-2.5h2.5Z"/></svg>
+              Condense Context
+            </button>
+            <details class="group w-full rounded-lg border border-slate-800 bg-slate-900/50">
+              <summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-xs font-medium text-slate-400 transition hover:text-slate-200 [&::-webkit-details-marker]:hidden">
+                <span>⚙️ Advanced Controls</span>
+                <svg aria-hidden="true" class="h-3.5 w-3.5 shrink-0 transition group-open:rotate-180" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.22 7.22a.75.75 0 0 1 1.06 0L10 10.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 8.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg>
+              </summary>
+              <div class="grid gap-x-5 gap-y-3 border-t border-slate-800 px-3 py-3 sm:grid-cols-2">
+                <label for="stripSignatures" class="inline-flex cursor-pointer items-start gap-2 text-xs text-slate-300 transition hover:text-slate-100">
+                  <input id="stripSignatures" type="checkbox" checked class="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-0 focus:ring-offset-slate-950">
+                  <span>Remove email signatures</span>
+                </label>
+                <label for="stripBracketedMetadata" class="inline-flex cursor-pointer items-start gap-2 text-xs text-slate-300 transition hover:text-slate-100">
+                  <input id="stripBracketedMetadata" type="checkbox" checked class="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-0 focus:ring-offset-slate-950">
+                  <span>Remove hidden system details</span>
+                </label>
+                <label for="stripMeetingLinks" class="inline-flex cursor-pointer items-start gap-2 text-xs text-slate-300 transition hover:text-slate-100">
+                  <input id="stripMeetingLinks" type="checkbox" checked class="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-0 focus:ring-offset-slate-950">
+                  <span>Remove meeting links and call-in info</span>
+                </label>
+                <label for="stripTerms" class="inline-flex cursor-pointer items-start gap-2 text-xs text-slate-300 transition hover:text-slate-100">
+                  <input id="stripTerms" type="checkbox" checked class="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-0 focus:ring-offset-slate-950">
+                  <span>Remove legal and repeating text</span>
+                </label>
+              </div>
+            </details>
+          </div>
+          <p id="condenseStatus" role="status" aria-live="polite" class="min-h-5 text-xs text-slate-500">Your text stays in this browser.</p>
+        </div>
+
+        <div class="my-6 border-t border-slate-800"></div>
+        <div class="mb-2 flex items-center justify-between gap-3">
+          <label for="cleanText" class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Clean text</label>
+          <span id="characterCount" class="text-[11px] tabular-nums text-slate-500">0 characters</span>
+        </div>
+        <textarea id="cleanText" rows="8" spellcheck="false" aria-label="Condensed clean text" placeholder="Your condensed text will appear here…" class="block min-h-[170px] w-full rounded-xl border border-slate-700/90 bg-[#0a111e] px-4 py-3.5 text-sm leading-6 text-slate-200 placeholder:text-slate-600 focus:border-blue-500/70 focus:outline-none"></textarea>
+        <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <button id="copyCleanButton" type="button" class="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-800/70 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-slate-600 hover:bg-slate-700/80 disabled:cursor-not-allowed disabled:opacity-40" disabled>
+            <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M6.667 2.5A2.5 2.5 0 0 0 4.167 5v9.167a2.5 2.5 0 0 0 2.5 2.5h7.5a2.5 2.5 0 0 0 2.5-2.5V5a2.5 2.5 0 0 0-2.5-2.5h-7.5Zm-4.167 5a.833.833 0 0 0-1.667 0v8.333A3.333 3.333 0 0 0 4.167 19.167h7.5a.833.833 0 1 0 0-1.667h-7.5a1.667 1.667 0 0 1-1.667-1.667V7.5Z"/></svg>
+            Copy Clean Text
+          </button>
+          <p id="copyCleanStatus" role="status" aria-live="polite" class="min-h-5 text-xs text-slate-500"></p>
+        </div>
+      </section>
+
+      <section aria-labelledby="outcome-heading" class="panel rounded-2xl border border-slate-800 p-5 sm:p-7">
+        <div class="mb-6 flex items-start gap-4">
+          <span class="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-400/20 bg-blue-500/10 text-xs font-bold tracking-wider text-blue-300">02</span>
+          <div>
+            <p class="text-[11px] font-semibold uppercase tracking-[.17em] text-blue-300">Step 2</p>
+            <h2 id="outcome-heading" class="mt-1 text-xl font-semibold text-white">Pick a task</h2>
+            <p class="mt-1 text-sm leading-5 text-slate-400">Click one of the options below to generate a quick prompt for your AI assistant. The clean text from Step 1 is added automatically.</p>
+          </div>
+        </div>
+
+        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+          <button type="button" class="prompt-card group relative min-h-[154px] rounded-xl border border-slate-700/80 p-4 text-left" data-prompt="executive">
+            <span class="absolute right-4 top-4 flex h-6 w-6 items-center justify-center rounded-full border border-slate-700 bg-slate-900/70 text-[10px] font-bold text-slate-400 transition group-hover:border-slate-600 group-hover:text-slate-200">1</span>
+            <span class="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500/10 text-blue-300">
+              <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M3.333 2.5A1.667 1.667 0 0 0 1.667 4.167v11.666A1.667 1.667 0 0 0 3.333 17.5h13.334a1.667 1.667 0 0 0 1.666-1.667V4.167A1.667 1.667 0 0 0 16.667 2.5H3.333Zm1.25 3.333h10.834v1.667H4.583V5.833Zm0 3.334h10.834v1.666H4.583V9.167Zm0 3.333h7.084v1.667H4.583V12.5Z"/></svg>
+            </span>
+            <span class="block pr-10 text-sm font-semibold text-slate-100">Quick Summary</span>
+            <span class="mt-1.5 block text-xs leading-5 text-slate-400">Get the main points and important decisions in plain English.</span>
+            <span class="copy-alert mt-3 block min-h-4 text-[11px] font-semibold text-emerald-400" aria-live="polite"></span>
+          </button>
+
+          <button type="button" class="prompt-card group relative min-h-[154px] rounded-xl border border-slate-700/80 p-4 text-left" data-prompt="actions">
+            <span class="absolute right-4 top-4 flex h-6 w-6 items-center justify-center rounded-full border border-slate-700 bg-slate-900/70 text-[10px] font-bold text-slate-400 transition group-hover:border-slate-600 group-hover:text-slate-200">2</span>
+            <span class="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-300">
+              <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.667 2.5H3.333a1.667 1.667 0 0 0-1.666 1.667v11.666A1.667 1.667 0 0 0 3.333 17.5h13.334a1.667 1.667 0 0 0 1.666-1.667V4.167A1.667 1.667 0 0 0 16.667 2.5ZM5 5.833a.833.833 0 1 0 0 1.667h1.667a.833.833 0 0 0 0-1.667H5Zm0 3.334a.833.833 0 1 0 0 1.666h1.667a.833.833 0 0 0 0-1.666H5Zm0 3.333a.833.833 0 1 0 0 1.667h1.667a.833.833 0 0 0 0-1.667H5Zm5-6.667a.833.833 0 0 0 0 1.667h5a.833.833 0 0 0 0-1.667h-5Zm0 3.334a.833.833 0 0 0 0 1.666h5a.833.833 0 0 0 0-1.666h-5Zm0 3.333a.833.833 0 0 0 0 1.667h5a.833.833 0 0 0 0-1.667h-5Z" clip-rule="evenodd"/></svg>
+            </span>
+            <span class="block pr-10 text-sm font-semibold text-slate-100">List Next Steps</span>
+            <span class="mt-1.5 block text-xs leading-5 text-slate-400">Turn the text into clear tasks, owners, and deadlines.</span>
+            <span class="copy-alert mt-3 block min-h-4 text-[11px] font-semibold text-emerald-400" aria-live="polite"></span>
+          </button>
+
+          <button type="button" class="prompt-card group relative min-h-[154px] rounded-xl border border-slate-700/80 p-4 text-left" data-prompt="data">
+            <span class="absolute right-4 top-4 flex h-6 w-6 items-center justify-center rounded-full border border-slate-700 bg-slate-900/70 text-[10px] font-bold text-slate-400 transition group-hover:border-slate-600 group-hover:text-slate-200">3</span>
+            <span class="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-300">
+              <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M3.333 2.5h13.334c.92 0 1.666.746 1.666 1.667v11.666c0 .921-.746 1.667-1.666 1.667H3.333a1.667 1.667 0 0 1-1.666-1.667V4.167c0-.921.746-1.667 1.666-1.667ZM5 5a.833.833 0 1 0 0 1.667h10A.833.833 0 0 0 15 5H5Zm0 4.167a.833.833 0 0 0 0 1.666h3.333a.833.833 0 0 0 0-1.666H5Zm6.667 0a.833.833 0 0 0 0 1.666H15a.833.833 0 0 0 0-1.666h-3.333ZM5 12.5a.833.833 0 0 0 0 1.667h3.333a.833.833 0 0 0 0-1.667H5Zm6.667 0a.833.833 0 0 0 0 1.667H15a.833.833 0 0 0 0-1.667h-3.333Z"/></svg>
+            </span>
+            <span class="block pr-10 text-sm font-semibold text-slate-100">Organize the Details</span>
+            <span class="mt-1.5 block text-xs leading-5 text-slate-400">Pull out the useful facts and put them into a neat format.</span>
+            <span class="copy-alert mt-3 block min-h-4 text-[11px] font-semibold text-emerald-400" aria-live="polite"></span>
+          </button>
+
+          <button type="button" class="prompt-card group relative min-h-[154px] rounded-xl border border-slate-700/80 p-4 text-left" data-prompt="draft">
+            <span class="absolute right-4 top-4 flex h-6 w-6 items-center justify-center rounded-full border border-slate-700 bg-slate-900/70 text-[10px] font-bold text-slate-400 transition group-hover:border-slate-600 group-hover:text-slate-200">4</span>
+            <span class="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-violet-500/10 text-violet-300">
+              <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M3.333 2.5h13.334c.92 0 1.666.746 1.666 1.667v11.666c0 .921-.746 1.667-1.666 1.667H3.333a1.667 1.667 0 0 1-1.666-1.667V4.167c0-.921.746-1.667 1.666-1.667Zm1.25 3.333a.833.833 0 0 0 0 1.667h10a.833.833 0 0 0 0-1.667h-10Zm0 3.334a.833.833 0 0 0 0 1.666h6.667a.833.833 0 0 0 0-1.666H4.583Zm0 3.333a.833.833 0 0 0 0 1.667h8.334a.833.833 0 0 0 0-1.667H4.583Z"/></svg>
+            </span>
+            <span class="block pr-10 text-sm font-semibold text-slate-100">Write a Message</span>
+            <span class="mt-1.5 block text-xs leading-5 text-slate-400">Draft a clear email or memo from the information you pasted.</span>
+            <span class="copy-alert mt-3 block min-h-4 text-[11px] font-semibold text-emerald-400" aria-live="polite"></span>
+          </button>
+        </div>
+        <p class="mt-5 border-t border-slate-800 pt-4 text-xs leading-5 text-slate-500">Prompts are model-agnostic. Your source text is never sent anywhere by this page.</p>
+      </section>
+    </div>
+    <footer class="mt-7 flex flex-col gap-2 text-[11px] text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+      <span>AI Context Condenser <span class="mx-1.5 text-slate-700">/</span> A focused workspace for clearer input</span>
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <span>No account. No upload. Just useful context.</span>
+        <span class="text-slate-700" aria-hidden="true">|</span>
+        <span>&copy; 2026 FlowLock Automation</span>
+        <span class="text-slate-700" aria-hidden="true">|</span>
+        <a href="legal.html#terms" class="text-slate-500 underline decoration-slate-700 underline-offset-2 transition hover:text-slate-300">Terms</a>
+        <span class="text-slate-700" aria-hidden="true">|</span>
+        <a href="legal.html#privacy" class="text-slate-500 underline decoration-slate-700 underline-offset-2 transition hover:text-slate-300">Privacy Policy</a>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    /*
+     * Copyright (c) 2026 FlowLock Automation. All Rights Reserved.
+     * Confidential & Proprietary. This software is protected by international
+     * copyright laws and treaty provisions. Reverse engineering is strictly prohibited.
+     */
+    "use strict";
+
+    const rawText = document.getElementById("rawText");
+    const cleanText = document.getElementById("cleanText");
+    const condenseButton = document.getElementById("condenseButton");
+    const copyCleanButton = document.getElementById("copyCleanButton");
+    const condenseStatus = document.getElementById("condenseStatus");
+    const copyCleanStatus = document.getElementById("copyCleanStatus");
+    const rawCharacterCount = document.getElementById("rawCharacterCount");
+    const characterCount = document.getElementById("characterCount");
+
+    function condenseContext(text) {
+      const normalizedText = text.replace(/\r\n?/g, "\n");
+      let blocks = normalizedText.split(/\n[ \t]*\n+/);
+      const boilerplateBlock = /\b(?:INSTRUCTIONS|POLICY[ \t]+BOILERPLATE|TERMS[ \t]+AND[ \t]+CONDITIONS|(?:DATA[ \t]+)?PRIVACY[ \t]+NOTICE)\b/i;
+      blocks = blocks.filter((block) => !boilerplateBlock.test(block));
+
+      let result = blocks.join("\n\n");
+      result = result.replace(/^[ \t]*(?:From|To|Cc|Bcc|Date|Sent|Subject):[^\r\n]*(?:\r?\n|$)/gim, "");
+      result = result.replace(/^[ \t]*(?:CONFIDENTIALITY NOTICE|NOTICE):[^\r\n]*(?:\r?\n(?:(?![ \t]*\r?$)[^\r\n]*(?:\r?\n|$))*)?/gim, "");
+      result = result.replace(/>/g, "");
+      const meetingDetails = /https?:\/\/\S+|join the meeting now:|meeting id:|passcode:|conference id:|dial in by phone|microsoft teams|need help\?|(?:meeting\s+)?pin\s*[:#]?\s*[\w -]*#|\+1(?:[\s().-]*\d){10}(?:\s*[,;]\s*[,;]?\s*\d{3,}#?|\s*#)/i;
+      result = result.split("\n").filter((line) => !meetingDetails.test(line)).join("\n");
+      result = result.replace(/^[ \t]*(?:(?:Best regards|Thanks|Regards|Sincerely|Thank you(?: for your business)?),|Submitted by[:,])[^\n]*(?:\n(?![ \t]*\n)[^\n]*)*/gim, "");
+      result = result.replace(/(?:[ \t]*:[ \t]*)?[ \t]*\[[^\]\r\n]*\](?:[ \t]*:[ \t]*)?/g, " ");
+      result = result.replace(/^[ \t]*={3,}[ \t]*\n?/gm, "");
+      result = result.replace(/^[ \t]*-{3,}[ \t]*\n?/gm, "");
+      result = result.replace(/\n[ \t]*\n+/g, "\n\n");
+
+      return result.trim();
+    }
+
+    condenseButton.addEventListener("click", () => {
+      cleanText.value = condenseContext(rawText.value);
+      rawCharacterCount.textContent = `${rawText.value.length.toLocaleString()} characters`;
+      characterCount.textContent = `${cleanText.value.length.toLocaleString()} characters`;
+      copyCleanButton.disabled = cleanText.value.length === 0;
+      condenseStatus.textContent = rawText.value.length
+        ? "Context condensed and ready to use."
+        : "Add some source text to get started.";
+      copyCleanStatus.textContent = "";
+    });
+
+    rawText.addEventListener("input", () => {
+      rawCharacterCount.textContent = `${rawText.value.length.toLocaleString()} characters`;
+    });
+
+    cleanText.addEventListener("input", () => {
+      characterCount.textContent = `${cleanText.value.length.toLocaleString()} characters`;
+      copyCleanButton.disabled = cleanText.value.length === 0;
+      copyCleanStatus.textContent = "";
+    });
+
+    async function copyText(text) {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return;
+      }
+
+      const temporaryField = document.createElement("textarea");
+      temporaryField.value = text;
+      temporaryField.setAttribute("readonly", "");
+      temporaryField.style.position = "fixed";
+      temporaryField.style.opacity = "0";
+      document.body.appendChild(temporaryField);
+      temporaryField.select();
+      const copied = document.execCommand("copy");
+      temporaryField.remove();
+      if (!copied) {
+        throw new Error("Clipboard access is not available in this browser.");
+      }
+    }
+
+    copyCleanButton.addEventListener("click", async () => {
+      try {
+        await copyText(cleanText.value);
+        copyCleanStatus.textContent = "Copied to clipboard.";
+        copyCleanStatus.classList.remove("text-rose-400");
+        copyCleanStatus.classList.add("text-emerald-400");
+      } catch (error) {
+        copyCleanStatus.textContent = "Could not copy. Select the text and copy it manually.";
+        copyCleanStatus.classList.remove("text-emerald-400");
+        copyCleanStatus.classList.add("text-rose-400");
+        console.error("Unable to copy condensed text:", error);
+      }
+    });
+
+    const prompts = {
+      executive: `Act as an executive communications analyst. Review the source text below and produce a concise, decision-ready summary.
+
+Requirements:
+- Start directly with the summary; do not include a preamble, greeting, or explanation of your process.
+- Use clear, concise bullet points. Prioritize the most important conclusions, decisions, risks, and relevant context.
+- Preserve factual accuracy, names, dates, and figures. Do not infer information that is not present.
+- If a detail is unclear or absent, state that briefly rather than guessing.
+
+Source text:
+[PASTE TEXT HERE]`,
+      actions: `Extract every explicit or clearly implied action item from the source text below.
+
+Return only a compact Markdown table with these columns: Task | Assignee | Deadline | Status / Context.
+- Include one task per row; keep each entry concise.
+- Use the named owner and deadline when stated. Write "Unassigned" or "Not specified" when missing.
+- Do not invent tasks, owners, or dates. Include an empty table message if no action items are found.
+
+Source text:
+[PASTE TEXT HERE]`,
+      data: `Extract and clean the relevant data from the source text below.
+
+Choose the most useful output format for the data: a Markdown table, CSV in a fenced code block, or clearly structured text. Keep the format consistent and easy to reuse.
+- Preserve all meaningful values, labels, units, and relationships.
+- Normalize obvious formatting inconsistencies without changing the underlying data.
+- Do not guess missing values. Mark them "Not specified" where useful.
+- Return only the formatted result, with no preamble.
+
+Source text:
+[PASTE TEXT HERE]`,
+      draft: `Draft a polished, professional [EMAIL / MEMO] using the source material below.
+
+Requirements:
+- Use a clear, natural, appropriately professional tone: direct, considerate, and specific.
+- Lead with the purpose. Organize details so the recipient can quickly understand the message and any requested next step.
+- Preserve the facts, names, dates, and intent in the source. Do not invent commitments or details.
+- Avoid conversational AI filler, including phrases such as "I hope this message finds you well," "Certainly," and "As an AI."
+- Use placeholders such as [RECIPIENT] or [SIGN-OFF] only when necessary information is missing.
+- Return the draft only, with no commentary.
+
+Source material:
+[PASTE TEXT HERE]`
+    };
+
+    document.querySelectorAll("[data-prompt]").forEach((card) => {
+      let alertTimer;
+      card.addEventListener("click", async () => {
+        const alert = card.querySelector(".copy-alert");
+        window.clearTimeout(alertTimer);
+        try {
+          const prompt = prompts[card.dataset.prompt];
+          const cleanedContext = document.getElementById("cleanText").value.trim();
+          const instruction = prompt.replace(/\n\n(?:Source text|Source material):\n\[PASTE TEXT HERE\]$/, "");
+          const textToCopy = cleanedContext
+            ? `[INSTRUCTION]: ${instruction}\n\n[CONTEXT]:\n${cleanedContext}`
+            : prompt;
+          await copyText(textToCopy);
+          alert.textContent = "Copied! Paste into your AI assistant.";
+          alert.classList.remove("text-rose-400");
+          alert.classList.add("text-emerald-400");
+        } catch (error) {
+          alert.textContent = "Copy failed — try again.";
+          alert.classList.remove("text-emerald-400");
+          alert.classList.add("text-rose-400");
+          console.error("Unable to copy prompt:", error);
+        }
+        alertTimer = window.setTimeout(() => {
+          alert.textContent = "";
+        }, 2200);
+      });
+    });
+  </script>
+</body>
+</html>
